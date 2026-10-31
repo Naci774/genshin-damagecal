@@ -2,51 +2,181 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>简易计算器</title>
+  <title>原神伤害计算器</title>
   <style>
-    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f4f4f9; }
-    .calculator { width: 240px; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    #display { grid-column: span 4; height: 45px; text-align: right; font-size: 24px; padding: 5px 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-    button { height: 45px; font-size: 18px; border: none; background: #e0e0e0; border-radius: 5px; cursor: pointer; transition: 0.2s; }
-    button:hover { background: #d0d0d0; }
-    button.operator { background: #ff9500; color: white; }
-    button.operator:hover { background: #e08500; }
+    /* 全局背景与布局 */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f2f4f7;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* 主卡片容器 */
+    .calculator-card {
+      width: 100%;
+      max-width: 500px;
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #1d2129;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    /* 输入框分组样式 */
+    .section-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #86909c;
+      margin-top: 15px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #e5e6eb;
+      padding-bottom: 5px;
+    }
+
+    .form-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      font-size: 14px;
+      color: #4e5969;
+    }
+
+    .form-group input {
+      width: 120px;
+      padding: 8px 10px;
+      border: 1px solid #c9cdd4;
+      border-radius: 6px;
+      font-size: 14px;
+      text-align: right;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: #165dff;
+    }
+
+    /* 计算按钮 */
+    .btn-calc {
+      width: 100%;
+      padding: 12px;
+      background-color: #165dff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    .btn-calc:hover {
+      background-color: #0e42d2;
+    }
+
+    /* 结果展示区 */
+    .result-box {
+      margin-top: 20px;
+      background: #f7f8fa;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #e5e6eb;
+    }
+
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .result-item.highlight {
+      font-weight: bold;
+      color: #f53f3f;
+      font-size: 18px;
+      border-top: 1px dashed #e5e6eb;
+      padding-top: 8px;
+      margin-bottom: 0;
+    }
   </style>
 </head>
 <body>
 
-<div class="calculator">
-  <input type="text" id="display" readonly>
-  <button onclick="clearDisplay()">C</button>
-  <button class="operator" onclick="append('/')">/</button>
-  <button class="operator" onclick="append('*')">*</button>
-  <button class="operator" onclick="append('-')">-</button>
-  <button onclick="append('7')">7</button>
-  <button onclick="append('8')">8</button>
-  <button onclick="append('9')">9</button>
-  <button class="operator" onclick="append('+')">+</button>
-  <button onclick="append('4')">4</button>
-  <button onclick="append('5')">5</button>
-  <button onclick="append('6')">6</button>
-  <button class="operator" onclick="calculate()" style="grid-row: span 2; height: 100px;">=</button>
-  <button onclick="append('1')">1</button>
-  <button onclick="append('2')">2</button>
-  <button onclick="append('3')">3</button>
-  <button onclick="append('0')" style="grid-column: span 2;">0</button>
-  <button onclick="append('.')">.</button>
+<div class="calculator-card">
+  <h2>原神伤害计算器</h2>
+
+  <!-- 1. 角色面板数据输入框 -->
+  <div class="section-title">面板属性</div>
+  
+  <div class="form-group">
+    <label for="atk">面板总攻击力</label>
+    <input type="number" id="atk" placeholder="例如 2000" value="2000">
+  </div>
+
+  <div class="form-group">
+    <label for="skillRatio">技能倍率 (%)</label>
+    <input type="number" id="skillRatio" placeholder="例如 200" value="200">
+  </div>
+
+  <div class="form-group">
+    <label for="critDmg">暴击伤害 (%)</label>
+    <input type="number" id="critDmg" placeholder="例如 150" value="150">
+  </div>
+
+  <div class="form-group">
+    <label for="elemBns">元素/物理伤加成 (%)</label>
+    <input type="number" id="elemBns" placeholder="例如 46.6" value="46.6">
+  </div>
+
+  <!-- 2. 敌方属性输入框 -->
+  <div class="section-title">目标敌方属性</div>
+
+  <div class="form-group">
+    <label for="charLevel">角色等级</label>
+    <input type="number" id="charLevel" value="90">
+  </div>
+
+  <div class="form-group">
+    <label for="enemyLevel">敌人等级</label>
+    <input type="number" id="enemyLevel" value="90">
+  </div>
+
+  <div class="form-group">
+    <label for="enemyRes">敌人对应抗性 (%)</label>
+    <input type="number" id="enemyRes" value="10">
+  </div>
+
+  <!-- 触发按钮 -->
+  <button class="btn-calc" onclick="calculate()">开始计算伤害</button>
+
+  <!-- 3. 结果显示区域 -->
+  <div class="result-box">
+    <div class="result-item">
+      <span>未暴击期望：</span>
+      <span id="nonCritResult">0</span>
+    </div>
+    <div class="result-item highlight">
+      <span>暴击伤害：</span>
+      <span id="critResult">0</span>
+    </div>
+  </div>
 </div>
 
 <script>
-  const display = document.getElementById('display');
-
-  function append(val) { display.value += val; }
-  function clearDisplay() { display.value = ''; }
   function calculate() {
-    try {
-      display.value = Function('"use strict"; return (' + display.value + ')')();
-    } catch {
-      display.value = 'Error';
-    }
+    // 逻辑留待下一步编写
   }
 </script>
 
