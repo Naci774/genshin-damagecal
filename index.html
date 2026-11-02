@@ -246,54 +246,64 @@
 
   <div class="calculator-layout">
     
-    <!-- ==================== 左侧：角色 + 武器 ==================== -->
-    <div class="column-left">
-      <div class="card">
-        <div class="card-title">角色基础面板</div>
-        
-        <div class="form-row">
-          <label for="char-level">角色等级</label>
-          <input type="number" id="char-level" value="90">
-        </div>
+    <!-- 第一区块：角色基础面板 -->
+<div class="card">
+  <div class="card-title">角色基础面板</div>
+  
+  <div class="form-row">
+    <label for="char-level">角色等级 (固定)</label>
+    <input type="number" id="char-level" value="90" readonly style="background-color: #f7f8fa; color: #86909c; cursor: not-allowed;">
+  </div>
 
-        <div class="form-row">
-          <label for="char-hp">角色基础生命值</label>
-          <input type="number" id="char-hp" value="10000">
-        </div>
+  <div class="form-row">
+    <label for="char-hp">角色基础生命值</label>
+    <input type="number" id="char-hp" value="10000" placeholder="例: 10000">
+  </div>
 
-        <div class="form-row">
-          <label for="char-atk">基础攻击力 (白字)</label>
-          <input type="number" id="char-atk" value="300">
-        </div>
+  <div class="form-row">
+    <label for="char-atk">基础攻击力 (白字)</label>
+    <input type="number" id="char-atk" value="300" placeholder="例: 300">
+  </div>
 
-        <div class="form-row">
-          <label for="char-def">基础防御力</label>
-          <input type="number" id="char-def" value="600">
-        </div>
+  <div class="form-row">
+    <label for="char-def">基础防御力</label>
+    <input type="number" id="char-def" value="600" placeholder="例: 600">
+  </div>
 
-        <div class="form-row">
-          <label for="char-em">元素精通</label>
-          <input type="number" id="char-em" value="0">
-        </div>
+  <div class="form-row">
+    <label for="char-em">元素精通</label>
+    <input type="number" id="char-em" value="0" placeholder="例: 0">
+  </div>
 
-        <div class="form-row">
-          <label>角色突破加成</label>
-          <div class="input-group">
-            <select id="char-break-type">
-              <option value="hp_pct">生命值 (%)</option>
-              <option value="atk_pct">攻击力 (%)</option>
-              <option value="def_pct">防御力 (%)</option>
-              <option value="crit_rate">暴击率 (%)</option>
-              <option value="crit_dmg" selected>暴击伤害 (%)</option>
-              <option value="elem_bns">元素伤害加成 (%)</option>
-              <option value="phy_bns">物理伤害加成 (%)</option>
-              <option value="em">元素精通</option>
-              <option value="er">元素充能效率 (%)</option>
-            </select>
-            <input type="number" id="char-break-val" value="38.4" style="width: 100px;">
-          </div>
-        </div>
-      </div>
+  <!-- 突破加成属性选择与 4星/5星 自动固定数值显示 -->
+  <div class="form-row">
+    <label for="char-break-type">角色突破加成类型</label>
+    <select id="char-break-type" onchange="updateBreakthroughValues(this.value)">
+      <option value="none">无 (如攻击/防御突破加成等非常规/无突破属性)</option>
+      <option value="crit_rate">暴击率 (%)</option>
+      <option value="crit_dmg" selected>暴击伤害 (%)</option>
+      <option value="elem_bns">元素/物理伤害加成 (%)</option>
+      <option value="atk_pct">攻击力 (%)</option>
+      <option value="hp_pct">生命值 (%)</option>
+      <option value="def_pct">防御力 (%)</option>
+      <option value="er">元素充能效率 (%)</option>
+      <option value="em">元素精通</option>
+    </select>
+  </div>
+
+  <!-- 4星与5星固定加成数值 (分栏只读展示) -->
+  <div class="sub-stat-row" style="margin-top: 6px;">
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 12px; color: #86909c;">4星突破加成</span>
+      <input type="text" id="char-break-val-4star" value="28.8%" readonly style="background-color: #f7f8fa; text-align: center;">
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 12px; color: #165dff; font-weight: bold;">5星突破加成</span>
+      <input type="text" id="char-break-val-5star" value="38.4%" readonly style="background-color: #f7f8fa; text-align: center; font-weight: bold; color: #165dff;">
+    </div>
+  </div>
+
+</div>
 
       <div class="card">
         <div class="card-title">
