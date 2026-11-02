@@ -552,6 +552,32 @@
       const immuneListBox = document.getElementById('immune-list-box');
       immuneListBox.style.display = isImmuneOn ? 'flex' : 'none';
     }
+    // 圣遗物副词条防重逻辑
+function checkDuplicateSubStat(selectElement) {
+  const selectedValue = selectElement.value;
+  
+  // 如果选的是 "-- 无 --"，不做拦截
+  if (selectedValue === 'none') return;
+
+  // 找到当前副词条所在的圣遗物卡片（artifact-item）
+  const artifactCard = selectElement.closest('.artifact-item');
+  // 获取该卡片内所有的副词条下拉菜单（共 4 个）
+  const allSelects = artifactCard.querySelectorAll('.sub-stat-table select');
+
+  // 统计当前选择的词条出现了几次
+  let count = 0;
+  allSelects.forEach(sel => {
+    if (sel.value === selectedValue) {
+      count++;
+    }
+  });
+
+  // 如果出现次数大于 1，说明重复选择了
+  if (count > 1) {
+    alert('同一圣遗物不能选择重复的副词条！');
+    selectElement.value = 'none'; // 强制重置回无
+  }
+}
   </script>
 
 </body>
