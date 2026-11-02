@@ -1,554 +1,77 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-  <meta charset="UTF-8">
-  <title>原神伤害计算器</title>
-  <style>
-    /* 1. 全局样式重置与背景 */
-    * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #f0f2f5;
-      margin: 0;
-      padding: 20px;
-      color: #1f2329;
-    }
+<!-- 第二区块：敌人基础面板 (抗性模式与免疫开关) -->
+<div class="card">
+  <div class="card-title">敌人基础面板</div>
 
-    h1 { text-align: center; margin-bottom: 20px; font-size: 24px; color: #1d2129; }
-
-    /* 2. 三栏主容器布局 */
-    .calculator-layout {
-      display: grid;
-      grid-template-columns: 320px 1fr 380px; /* 左-中-右 比例 */
-      gap: 20px;
-      max-width: 1600px;
-      margin: 0 auto;
-    }
-
-    @media (max-width: 1200px) {
-      .calculator-layout { grid-template-columns: 1fr; }
-    }
-
-    /* 3. 通用卡片样式 */
-    .card {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      margin-bottom: 16px;
-    }
-
-    .card-title {
-      font-size: 15px;
-      font-weight: bold;
-      padding-bottom: 10px;
-      margin-bottom: 12px;
-      border-bottom: 2px solid #e5e6eb;
-      color: #165dff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .card-title .tag {
-      font-size: 12px;
-      font-weight: normal;
-      background: #f2f3f5;
-      color: #86909c;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-
-    /* 4. 表单基础元素 */
-    .form-row {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-
-    .form-row label { font-size: 13px; color: #4e5969; font-weight: 500; }
-    
-    .input-group { display: flex; gap: 6px; }
-
-    input, select {
-      width: 100%;
-      padding: 7px 9px;
-      border: 1px solid #c9cdd4;
-      border-radius: 4px;
-      font-size: 13px;
-      outline: none;
-      background-color: #fff;
-    }
-
-    input:focus, select:focus { border-color: #165dff; }
-
-    /* Toggle 开关组件样式 (Off/On 灰变蓝) */
-    .toggle-wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-
-    .toggle-label { font-size: 13px; font-weight: 500; color: #4e5969; }
-
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 44px;
-      height: 22px;
-    }
-
-    .switch input { opacity: 0; width: 0; height: 0; }
-
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #c9cdd4; /* Off 状态为灰色 */
-      transition: .3s;
-      border-radius: 22px;
-    }
-
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 16px;
-      width: 16px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .3s;
-      border-radius: 50%;
-    }
-
-    input:checked + .slider {
-      background-color: #165dff; /* On 状态为蓝色 */
-    }
-
-    input:checked + .slider:before {
-      transform: translateX(22px);
-    }
-
-    /* 圣遗物卡片样式 (4排2列副词条) */
-    .artifact-item {
-      border: 1px solid #e5e6eb;
-      border-radius: 6px;
-      padding: 10px;
-      margin-bottom: 10px;
-      background: #fafafa;
-    }
-
-    .artifact-name {
-      font-size: 13px;
-      font-weight: bold;
-      color: #1d2129;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .sub-stat-table {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .sub-stat-row {
-      display: grid;
-      grid-template-columns: 1.3fr 1fr; /* 1列: 类型, 2列: 数值 */
-      gap: 6px;
-    }
-
-    /* 敌人抗性 4排4列 网格 */
-    .res-grid-detailed {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr 1fr); /* 4排4列表现为2组 label+input */
-      gap: 6px 8px;
-      align-items: center;
-      background: #f7f8fa;
-      padding: 10px;
-      border-radius: 6px;
-      margin-top: 8px;
-    }
-
-    .res-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 12px;
-      color: #4e5969;
-    }
-
-    .res-item input {
-      padding: 4px 6px;
-      font-size: 12px;
-    }
-
-    /* 元素免疫 7排1列 独立开关列表 */
-    .immune-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      background: #f7f8fa;
-      padding: 10px;
-      border-radius: 6px;
-      margin-top: 8px;
-    }
-
-    .immune-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      color: #1d2129;
-      border-bottom: 1px dashed #e5e6eb;
-      padding-bottom: 4px;
-    }
-
-    .immune-item:last-child { border-bottom: none; }
-
-    /* 中间过程区样式 */
-    .process-panel {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      min-height: 600px;
-    }
-
-    .formula-box {
-      background: #f7f8fa;
-      border-left: 4px solid #165dff;
-      padding: 12px;
-      border-radius: 0 6px 6px 0;
-      margin-bottom: 16px;
-      font-family: monospace;
-      font-size: 13px;
-      color: #333;
-    }
-
-    .placeholder-box {
-      border: 2px dashed #e5e6eb;
-      border-radius: 6px;
-      padding: 20px;
-      text-align: center;
-      color: #86909c;
-      font-size: 13px;
-      margin-top: 10px;
-    }
-  </style>
-</head>
-<body>
-
-  <h1>原神伤害计算器</h1>
-
-  <div class="calculator-layout">
-    
-    <!-- ==================== 左侧：角色 + 武器 ==================== -->
-    <div class="column-left">
-      <div class="card">
-        <div class="card-title">角色基础面板</div>
-        
-        <div class="form-row">
-          <label for="char-level">角色等级</label>
-          <input type="number" id="char-level" value="90">
-        </div>
-
-        <div class="form-row">
-          <label for="char-hp">角色基础生命值</label>
-          <input type="number" id="char-hp" value="10000">
-        </div>
-
-        <div class="form-row">
-          <label for="char-atk">基础攻击力 (白字)</label>
-          <input type="number" id="char-atk" value="300">
-        </div>
-
-        <div class="form-row">
-          <label for="char-def">基础防御力</label>
-          <input type="number" id="char-def" value="600">
-        </div>
-
-        <div class="form-row">
-          <label for="char-em">元素精通</label>
-          <input type="number" id="char-em" value="0">
-        </div>
-
-        <div class="form-row">
-          <label>角色突破加成</label>
-          <div class="input-group">
-            <select id="char-break-type">
-              <option value="hp_pct">生命值 (%)</option>
-              <option value="atk_pct">攻击力 (%)</option>
-              <option value="def_pct">防御力 (%)</option>
-              <option value="crit_rate">暴击率 (%)</option>
-              <option value="crit_dmg" selected>暴击伤害 (%)</option>
-              <option value="elem_bns">元素伤害加成 (%)</option>
-              <option value="phy_bns">物理伤害加成 (%)</option>
-              <option value="em">元素精通</option>
-              <option value="er">元素充能效率 (%)</option>
-            </select>
-            <input type="number" id="char-break-val" value="38.4" style="width: 100px;">
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">
-          武器面板 
-          <span class="tag">进阶挂载中</span>
-        </div>
-
-        <div class="form-row">
-          <label>武器等级 (进阶)</label>
-          <div class="placeholder-box" style="padding: 8px;">暂无（进阶功能区）</div>
-        </div>
-
-        <div class="form-row">
-          <label for="wpn-atk">武器基础攻击力</label>
-          <input type="number" id="wpn-atk" value="608">
-        </div>
-
-        <div class="form-row">
-          <label>武器副词条</label>
-          <div class="input-group">
-            <select id="wpn-sub-type">
-              <option value="atk_pct" selected>攻击力 (%)</option>
-              <option value="hp_pct">生命值 (%)</option>
-              <option value="def_pct">防御力 (%)</option>
-              <option value="crit_rate">暴击率 (%)</option>
-              <option value="crit_dmg">暴击伤害 (%)</option>
-              <option value="phy_bns">物理伤害加成 (%)</option>
-              <option value="em">元素精通</option>
-              <option value="er">元素充能效率 (%)</option>
-            </select>
-            <input type="number" id="wpn-sub-val" value="49.6" style="width: 100px;">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <label>武器特效 (进阶)</label>
-          <div class="placeholder-box" style="padding: 12px;">暂无特效逻辑（进阶功能区）</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ==================== 中间：伤害计算过程展示 ==================== -->
-    <div class="column-center">
-      <div class="process-panel">
-        <div class="card-title">伤害计算过程与实时结算</div>
-        
-        <div class="formula-box">
-          基础面板结算：<br>
-          基础攻击力(白字) = 角色基础攻击 + 武器基础攻击<br>
-          面板总攻击力(绿字) = 基础攻击力 × (1 + 攻击力%) + 固定攻击力
-        </div>
-
-        <div class="placeholder-box" style="min-height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-          <p style="font-size: 16px; font-weight: bold; margin-bottom: 8px;">[ 过程与结果展示区域 ]</p>
-          <p>左右两侧 UI 已搭建完毕，下一步可进行交互与逻辑绑定。</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ==================== 右侧：圣遗物 + 敌人基础面板 ==================== -->
-    <div class="column-right">
-      
-      <!-- 第一区块：圣遗物 (4排2列副词条架构) -->
-      <div class="card">
-        <div class="card-title">
-          圣遗物配置
-          <span class="tag">默认 +20 级</span>
-        </div>
-
-        <!-- 模板化生成 5 大部位辅助组件结构 -->
-        <!-- 1. 生之花 -->
-        <div class="artifact-item">
-          <div class="artifact-name">生之花 <span>固定 4780 HP</span></div>
-          <div class="sub-stat-table">
-            <!-- 4排2列副词条表单 -->
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-          </div>
-        </div>
-
-        <!-- 2. 死之羽 -->
-        <div class="artifact-item">
-          <div class="artifact-name">死之羽 <span>固定 311 攻击</span></div>
-          <div class="sub-stat-table">
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-          </div>
-        </div>
-
-        <!-- 3. 时之沙 -->
-        <div class="artifact-item">
-          <div class="artifact-name">时之沙 (主词条)</div>
-          <div class="input-group" style="margin-bottom: 8px;">
-            <select>
-              <option value="atk_pct">攻击力 (46.6%)</option>
-              <option value="hp_pct">生命值 (46.6%)</option>
-              <option value="def_pct">防御力 (58.3%)</option>
-              <option value="em">元素精通 (187)</option>
-              <option value="er">元素充能效率 (51.8%)</option>
-            </select>
-          </div>
-          <div class="sub-stat-table">
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-          </div>
-        </div>
-
-        <!-- 4. 空之杯 -->
-        <div class="artifact-item">
-          <div class="artifact-name">空之杯 (主词条)</div>
-          <div class="input-group" style="margin-bottom: 8px;">
-            <select>
-              <option value="elem_bns">元素伤害加成 (46.6%)</option>
-              <option value="phy_bns">物理伤害加成 (58.3%)</option>
-              <option value="atk_pct">攻击力 (46.6%)</option>
-              <option value="hp_pct">生命值 (46.6%)</option>
-              <option value="def_pct">防御力 (58.3%)</option>
-              <option value="em">元素精通 (187)</option>
-            </select>
-          </div>
-          <div class="sub-stat-table">
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-          </div>
-        </div>
-
-        <!-- 5. 理之冠 -->
-        <div class="artifact-item">
-          <div class="artifact-name">理之冠 (主词条)</div>
-          <div class="input-group" style="margin-bottom: 8px;">
-            <select>
-              <option value="crit_rate">暴击率 (31.1%)</option>
-              <option value="crit_dmg">暴击伤害 (62.2%)</option>
-              <option value="heal_bns">治疗加成 (35.9%)</option>
-              <option value="atk_pct">攻击力 (46.6%)</option>
-              <option value="hp_pct">生命值 (46.6%)</option>
-              <option value="def_pct">防御力 (58.3%)</option>
-            </select>
-          </div>
-          <div class="sub-stat-table">
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-            <div class="sub-stat-row"><select><option value="none">-- 无 --</option><option value="crit_rate">暴击率 (%)</option><option value="crit_dmg">暴击伤害 (%)</option><option value="atk_pct">攻击力 (%)</option><option value="atk">固定攻击</option><option value="hp_pct">生命值 (%)</option><option value="hp">固定生命</option><option value="def_pct">防御力 (%)</option><option value="def">固定防御</option><option value="em">元素精通</option><option value="er">元素充能效率 (%)</option></select><input type="number" placeholder="数值"></div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- 第二区块：敌人基础面板 (抗性模式与免疫开关) -->
-      <div class="card">
-        <div class="card-title">敌人基础面板</div>
-
-        <div class="form-row">
-          <label for="enemy-lvl">敌人等级</label>
-          <input type="number" id="enemy-lvl" value="90">
-        </div>
-
-        <!-- 抗性模式 Toggle (Off: 简略 / On: 详细) -->
-        <div class="toggle-wrapper">
-          <span class="toggle-label">详细抗性设定 (4排4列)</span>
-          <label class="switch">
-            <input type="checkbox" id="res-toggle" onchange="toggleResMode(this.checked)">
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <!-- 1排2列 简略统一抗性 -->
-        <div id="unified-res-box" class="form-row">
-          <div class="input-group" style="align-items: center;">
-            <span style="font-size: 13px; color: #4e5969; width: 90px;">全抗性 (%)</span>
-            <input type="number" value="10" placeholder="默认 10%">
-          </div>
-        </div>
-
-        <!-- 4排4列 详细独立抗性 (火、水、冰、雷、风、岩、草、物) -->
-        <div id="detailed-res-box" style="display: none;" class="res-grid-detailed">
-          <div class="res-item"><span style="width: 42px;">火抗:</span><input type="number" value="10"></div>
-          <div class="res-item"><span style="width: 42px;">水抗:</span><input type="number" value="10"></div>
-          <div class="res-item"><span style="width: 42px;">冰抗:</span><input type="number" value="10"></div>
-          <div class="res-item"><span style="width: 42px;">雷抗:</span><input type="number" value="10"></div>
-          <div class="res-item"><span style="width: 42px;">风抗:</span><input type="number" value="10"></div>
-          <div class="res-item"><span style="width: 42px;">岩抗:</span><input type="number" value="10"></div>
-          <div class="res-item"><span style="width: 42px;">草抗:</span><input type="number" value="10"></div>
-          <div class="res-item"><span style="width: 42px;">物抗:</span><input type="number" value="10"></div>
-        </div>
-
-        <div class="form-row" style="margin-top: 12px;">
-          <label for="enemy-element">敌人固有/当前元素附着</label>
-          <select id="enemy-element">
-            <option value="none">无附着 (无元素)</option>
-            <option value="pyro">火元素</option>
-            <option value="hydro">水元素</option>
-            <option value="dendro">草元素</option>
-            <option value="electro">雷元素</option>
-            <option value="cryo">冰元素</option>
-            <option value="anemo">风元素</option>
-            <option value="geo">岩元素</option>
-          </select>
-        </div>
-
-        <!-- 元素免疫 Toggle 开关与 7排1列 展开列表 -->
-        <div class="toggle-wrapper" style="margin-top: 12px;">
-          <span class="toggle-label">元素免疫设定</span>
-          <label class="switch">
-            <input type="checkbox" id="immune-toggle" onchange="toggleImmuneList(this.checked)">
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <!-- 7排1列 元素免疫勾选列表 -->
-        <div id="immune-list-box" style="display: none;" class="immune-list">
-          <div class="immune-item"><span>火元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
-          <div class="immune-item"><span>水元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
-          <div class="immune-item"><span>冰元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
-          <div class="immune-item"><span>雷元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
-          <div class="immune-item"><span>风元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
-          <div class="immune-item"><span>岩元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
-          <div class="immune-item"><span>草元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
-        </div>
-
-      </div>
-
-    </div>
-
+  <div class="form-row">
+    <label for="enemy-lvl">敌人等级</label>
+    <input type="number" id="enemy-lvl" value="90">
   </div>
 
-  <script>
-    // 切换抗性设置模式（Off: 简略 / On: 4排4列详细）
-    function toggleResMode(isDetailed) {
-      const unifiedBox = document.getElementById('unified-res-box');
-      const detailedBox = document.getElementById('detailed-res-box');
-      if (isDetailed) {
-        unifiedBox.style.display = 'none';
-        detailedBox.style.display = 'grid';
-      } else {
-        unifiedBox.style.display = 'flex';
-        detailedBox.style.display = 'none';
-      }
-    }
+  <!-- 抗性模式 Toggle (Off: 简略 / On: 4排4列详细) -->
+  <div class="toggle-wrapper">
+    <span class="toggle-label">详细抗性调整</span>
+    <label class="switch">
+      <input type="checkbox" id="res-toggle" onchange="toggleResMode(this.checked)">
+      <span class="slider"></span>
+    </label>
+  </div>
 
-    // 切换 7排1列 元素免疫列表展开状态
-    function toggleImmuneList(isImmuneOn) {
-      const immuneListBox = document.getElementById('immune-list-box');
-      immuneListBox.style.display = isImmuneOn ? 'flex' : 'none';
-    }
-  </script>
+  <!-- 1排2列 简略统一抗性 -->
+  <div id="unified-res-box" class="form-row">
+    <div class="input-group" style="align-items: center;">
+      <span style="font-size: 13px; color: #4e5969; width: 90px;">全抗性 (%)</span>
+      <input type="number" value="10" placeholder="默认 10%">
+    </div>
+  </div>
 
-</body>
-</html>
+  <!-- 4排4列 详细独立抗性 (火元素、水元素、冰元素、雷元素、风元素、岩元素、草元素、物理) -->
+  <div id="detailed-res-box" style="display: none;" class="res-grid-detailed">
+    <!-- 第 1 排 -->
+    <div class="res-item"><span>火元素抗性:</span><input type="number" value="10"></div>
+    <div class="res-item"><span>水元素抗性:</span><input type="number" value="10"></div>
+    <!-- 第 2 排 -->
+    <div class="res-item"><span>冰元素抗性:</span><input type="number" value="10"></div>
+    <div class="res-item"><span>雷元素抗性:</span><input type="number" value="10"></div>
+    <!-- 第 3 排 -->
+    <div class="res-item"><span>风元素抗性:</span><input type="number" value="10"></div>
+    <div class="res-item"><span>岩元素抗性:</span><input type="number" value="10"></div>
+    <!-- 第 4 排 -->
+    <div class="res-item"><span>草元素抗性:</span><input type="number" value="10"></div>
+    <div class="res-item"><span>物理抗性:</span><input type="number" value="10"></div>
+  </div>
+
+  <div class="form-row" style="margin-top: 12px;">
+    <label for="enemy-element">敌人固有/当前元素附着</label>
+    <select id="enemy-element">
+      <option value="none">无附着 (无元素)</option>
+      <option value="pyro">火元素</option>
+      <option value="hydro">水元素</option>
+      <option value="dendro">草元素</option>
+      <option value="electro">雷元素</option>
+      <option value="cryo">冰元素</option>
+      <option value="anemo">风元素</option>
+      <option value="geo">岩元素</option>
+    </select>
+  </div>
+
+  <!-- 元素免疫 Toggle 开关与 7排1列 展开列表 -->
+  <div class="toggle-wrapper" style="margin-top: 12px;">
+    <span class="toggle-label">元素免疫设定</span>
+    <label class="switch">
+      <input type="checkbox" id="immune-toggle" onchange="toggleImmuneList(this.checked)">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <!-- 7排1列 元素免疫勾选列表 -->
+  <div id="immune-list-box" style="display: none;" class="immune-list">
+    <div class="immune-item"><span>火元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+    <div class="immune-item"><span>水元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+    <div class="immune-item"><span>冰元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+    <div class="immune-item"><span>雷元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+    <div class="immune-item"><span>风元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+    <div class="immune-item"><span>岩元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+    <div class="immune-item"><span>草元素免疫</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+  </div>
+
+</div>
