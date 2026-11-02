@@ -4,181 +4,254 @@
   <meta charset="UTF-8">
   <title>原神伤害计算器</title>
   <style>
-    /* 全局背景与布局 */
+    /* 1. 全局样式重置与背景 */
+    * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #f2f4f7;
+      background-color: #f0f2f5;
       margin: 0;
       padding: 20px;
-      display: flex;
-      justify-content: center;
+      color: #1f2329;
     }
 
-    /* 主卡片容器 */
-    .calculator-card {
-      width: 100%;
-      max-width: 500px;
+    h1 { text-align: center; margin-bottom: 20px; font-size: 24px; color: #1d2129; }
+
+    /* 2. 三栏主容器布局 */
+    .calculator-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr 320px; /* 左-中-右 比例 */
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* 移动端/窄屏自适应支持 */
+    @media (max-width: 1024px) {
+      .calculator-layout { grid-template-columns: 1fr; }
+    }
+
+    /* 3. 通用卡片与区块样式 */
+    .card {
       background: #ffffff;
-      padding: 24px;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 16px;
     }
 
-    h2 {
-      margin-top: 0;
-      color: #1d2129;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    /* 输入框分组样式 */
-    .section-title {
-      font-size: 14px;
+    .card-title {
+      font-size: 16px;
       font-weight: bold;
-      color: #86909c;
-      margin-top: 15px;
-      margin-bottom: 10px;
-      border-bottom: 1px solid #e5e6eb;
-      padding-bottom: 5px;
-    }
-
-    .form-group {
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+      border-bottom: 2px solid #e5e6eb;
+      color: #165dff;
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+
+    .card-title .tag {
+      font-size: 12px;
+      font-weight: normal;
+      background: #f2f3f5;
+      color: #86909c;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* 4. 表单元素（输入框与下拉菜单） */
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
       margin-bottom: 12px;
     }
 
-    .form-group label {
-      font-size: 14px;
-      color: #4e5969;
+    .form-row label { font-size: 13px; color: #4e5969; font-weight: 500; }
+    
+    .input-group {
+      display: flex;
+      gap: 8px;
     }
 
-    .form-group input {
-      width: 120px;
+    input, select {
+      width: 100%;
       padding: 8px 10px;
       border: 1px solid #c9cdd4;
-      border-radius: 6px;
-      font-size: 14px;
-      text-align: right;
+      border-radius: 4px;
+      font-size: 13px;
       outline: none;
+      background-color: #fff;
     }
 
-    .form-group input:focus {
-      border-color: #165dff;
-    }
+    input:focus, select:focus { border-color: #165dff; }
+    input[readonly] { background-color: #f7f8fa; cursor: not-allowed; }
 
-    /* 计算按钮 */
-    .btn-calc {
-      width: 100%;
-      padding: 12px;
-      background-color: #165dff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 15px;
-    }
-
-    .btn-calc:hover {
-      background-color: #0e42d2;
-    }
-
-    /* 结果展示区 */
-    .result-box {
-      margin-top: 20px;
-      background: #f7f8fa;
-      padding: 15px;
+    /* 5. 中间过程区专用样式 */
+    .process-panel {
+      background: #ffffff;
       border-radius: 8px;
-      border: 1px solid #e5e6eb;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      min-height: 500px;
     }
 
-    .result-item {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 15px;
+    .formula-box {
+      background: #f7f8fa;
+      border-left: 4px solid #165dff;
+      padding: 12px;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 16px;
+      font-family: monospace;
+      font-size: 13px;
+      color: #333;
     }
 
-    .result-item.highlight {
-      font-weight: bold;
-      color: #f53f3f;
-      font-size: 18px;
-      border-top: 1px dashed #e5e6eb;
-      padding-top: 8px;
-      margin-bottom: 0;
+    .placeholder-box {
+      border: 2px dashed #e5e6eb;
+      border-radius: 6px;
+      padding: 25px;
+      text-align: center;
+      color: #86909c;
+      font-size: 13px;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
 
-<div class="calculator-card">
-  <h2>原神伤害计算器</h2>
+  <h1>原神伤害计算器</h1>
 
-  <!-- 1. 角色面板数据输入框 -->
-  <div class="section-title">面板属性</div>
-  
-  <div class="form-group">
-    <label for="atk">面板总攻击力</label>
-    <input type="number" id="atk" placeholder="例如 2000" value="2000">
-  </div>
+  <div class="calculator-layout">
+    
+    <!-- ==================== 左侧：角色 + 武器 ==================== -->
+    <div class="column-left">
+      
+      <!-- 第一区块：角色 -->
+      <div class="card">
+        <div class="card-title">角色基础面板</div>
+        
+        <div class="form-row">
+          <label for="char-level">角色等级</label>
+          <input type="number" id="char-level" value="90" placeholder="例: 90">
+        </div>
 
-  <div class="form-group">
-    <label for="skillRatio">技能倍率 (%)</label>
-    <input type="number" id="skillRatio" placeholder="例如 200" value="200">
-  </div>
+        <div class="form-row">
+          <label for="char-hp">角色基础生命值</label>
+          <input type="number" id="char-hp" value="10000" placeholder="例: 10000">
+        </div>
 
-  <div class="form-group">
-    <label for="critDmg">暴击伤害 (%)</label>
-    <input type="number" id="critDmg" placeholder="例如 150" value="150">
-  </div>
+        <div class="form-row">
+          <label for="char-atk">基础攻击力 (白字)</label>
+          <input type="number" id="char-atk" value="300" placeholder="例: 300">
+        </div>
 
-  <div class="form-group">
-    <label for="elemBns">元素/物理伤加成 (%)</label>
-    <input type="number" id="elemBns" placeholder="例如 46.6" value="46.6">
-  </div>
+        <div class="form-row">
+          <label for="char-def">基础防御力</label>
+          <input type="number" id="char-def" value="600" placeholder="例: 600">
+        </div>
 
-  <!-- 2. 敌方属性输入框 -->
-  <div class="section-title">目标敌方属性</div>
+        <div class="form-row">
+          <label for="char-em">元素精通</label>
+          <input type="number" id="char-em" value="0" placeholder="例: 0">
+        </div>
 
-  <div class="form-group">
-    <label for="charLevel">角色等级</label>
-    <input type="number" id="charLevel" value="90">
-  </div>
+        <div class="form-row">
+          <label>角色突破加成</label>
+          <div class="input-group">
+            <select id="char-break-type">
+              <option value="hp_pct">生命值 (%)</option>
+              <option value="atk_pct">攻击力 (%)</option>
+              <option value="def_pct">防御力 (%)</option>
+              <option value="crit_rate">暴击率 (%)</option>
+              <option value="crit_dmg" selected>暴击伤害 (%)</option>
+              <option value="elem_bns">元素伤害加成 (%)</option>
+              <option value="phy_bns">物理伤害加成 (%)</option>
+              <option value="em">元素精通</option>
+              <option value="er">元素充能效率 (%)</option>
+            </select>
+            <input type="number" id="char-break-val" value="38.4" style="width: 110px;" placeholder="数值">
+          </div>
+        </div>
+      </div>
 
-  <div class="form-group">
-    <label for="enemyLevel">敌人等级</label>
-    <input type="number" id="enemyLevel" value="90">
-  </div>
+      <!-- 第二区块：武器 -->
+      <div class="card">
+        <div class="card-title">
+          武器面板 
+          <span class="tag">进阶挂载中</span>
+        </div>
 
-  <div class="form-group">
-    <label for="enemyRes">敌人对应抗性 (%)</label>
-    <input type="number" id="enemyRes" value="10">
-  </div>
+        <!-- 进阶功能：仅展示空白 -->
+        <div class="form-row">
+          <label>武器等级 (进阶)</label>
+          <div class="placeholder-box" style="padding: 10px;">暂无（进阶功能区）</div>
+        </div>
 
-  <!-- 触发按钮 -->
-  <button class="btn-calc" onclick="calculate()">开始计算伤害</button>
+        <div class="form-row">
+          <label for="wpn-atk">武器基础攻击力</label>
+          <input type="number" id="wpn-atk" value="608" placeholder="例: 608">
+        </div>
 
-  <!-- 3. 结果显示区域 -->
-  <div class="result-box">
-    <div class="result-item">
-      <span>未暴击期望：</span>
-      <span id="nonCritResult">0</span>
+        <div class="form-row">
+          <label>武器副词条</label>
+          <div class="input-group">
+            <select id="wpn-sub-type">
+              <option value="atk_pct" selected>攻击力 (%)</option>
+              <option value="hp_pct">生命值 (%)</option>
+              <option value="def_pct">防御力 (%)</option>
+              <option value="crit_rate">暴击率 (%)</option>
+              <option value="crit_dmg">暴击伤害 (%)</option>
+              <option value="phy_bns">物理伤害加成 (%)</option>
+              <option value="em">元素精通</option>
+              <option value="er">元素充能效率 (%)</option>
+            </select>
+            <input type="number" id="wpn-sub-val" value="49.6" style="width: 110px;" placeholder="数值">
+          </div>
+        </div>
+
+        <!-- 进阶功能：仅展示空白 -->
+        <div class="form-row">
+          <label>武器特效 (进阶)</label>
+          <div class="placeholder-box" style="padding: 15px;">暂无特效逻辑（进阶功能区）</div>
+        </div>
+      </div>
+
     </div>
-    <div class="result-item highlight">
-      <span>暴击伤害：</span>
-      <span id="critResult">0</span>
-    </div>
-  </div>
-</div>
 
-<script>
-  function calculate() {
-    // 逻辑留待下一步编写
-  }
-</script>
+    <!-- ==================== 中间：伤害计算过程展示 ==================== -->
+    <div class="column-center">
+      <div class="process-panel">
+        <div class="card-title">伤害计算过程与实时结算</div>
+        
+        <div class="formula-box">
+          基础面板结算：<br>
+          基础攻击力(白字) = 角色基础攻击 + 武器基础攻击<br>
+          面板总攻击力(绿字) = 基础攻击力 × (1 + 攻击力%) + 固定攻击力
+        </div>
+
+        <div class="placeholder-box" style="min-height: 300px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+          <p style="font-size: 16px; font-weight: bold; margin-bottom: 8px;">[ 过程与结果展示区域 ]</p>
+          <p>确认左侧 UI 架构符合需求后，我们将在此处部署各乘区（攻击、倍率、增伤、暴击、防御、抗性）的具体过程推导。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 右侧：圣遗物 (暂未开放) ==================== -->
+    <div class="column-right">
+      <div class="card">
+        <div class="card-title">
+          圣遗物面板
+          <span class="tag">预留区块</span>
+        </div>
+        <div class="placeholder-box" style="min-height: 400px; display: flex; align-items: center; justify-content: center;">
+          右侧：圣遗物主词条与副词条区块（下一步调整）
+        </div>
+      </div>
+    </div>
+
+  </div>
 
 </body>
 </html>
